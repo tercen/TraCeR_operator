@@ -51,7 +51,7 @@ if (length(dir(input_path)) == 0) {
 
 output_path <- "/var/lib/tercen/share/write/tracer_output"
 
-r1_files <- list.files(input_path, "R1.fastq",
+r1_files <- list.files(input_path, "_R1.*q.gz$",
                        full.names = TRUE)
 
 if (length(r1_files) == 0) stop("ERROR: No R1 FastQ files found in trimmed_fastqs folder.")
@@ -64,10 +64,7 @@ samples = progressr::with_progress({
     r2_file <- str_replace(r2_file, "_val_1", "_val_2")
 
     sample_name <- str_split(basename(r1_file),
-                             "_R1.fastq")[[1]][[1]]
-
-  cat(r1_file)
-  cat(r2_file)
+                             "_R1")[[1]][[1]]
 
   cmd = '/tracer/tracer'
   args = paste('assemble',
