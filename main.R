@@ -2,8 +2,38 @@ library(tercen)
 library(dplyr)
 library(readr)
 library(stringr)
+library(progressr)
+library("future.apply")
+
+# plan(multisession) # works in R studio
+plan(multicore) ## don't work on R studio
+
+handler_tercen <- function(ctx, ...) {
+
+  env <- new.env()
+  assign("ctx", ctx, envir = env)
+
+  reporter <- local({
+    list(
+      update = function(config, state, progression, ...) {
+        evt = TaskProgressEvent$new()
+        evt$taskId = ctx$task$id
+        evt$total = config$max_steps
+        evt$actual = state$step
+        evt$message = paste0(state$message , " : ",  state$step, "/", config$max_steps)
+        ctx$client$eventService$sendChannel(ctx$task$channelId, evt)
+      }
+    )
+  }, envir = env)
+
+  progressr::make_progression_handler("tercen", reporter, intrusiveness = getOption("progressr.intrusiveness.gui", 1), target = "gui", interval = 1, ...)
+}
+
 
 ctx <- tercenCtx()
+
+options(progressr.enable = TRUE)
+progressr::handlers(handler_tercen(ctx))
 
 
 # Define input and output paths
@@ -27,27 +57,38 @@ r1_files <- list.files(input_path, "R1.fastq",
 if (length(r1_files) == 0) stop("ERROR: No R1 FastQ files found in trimmed_fastqs folder.")
 
 
-for (i in 1:length(r1_files)) {
-  
-  r1_file <- r1_files[[i]]
-  r2_file <- str_replace(r1_file, "R1", "R2")
-
-  sample_name <- str_split(basename(r1_file),
-                         "_R1.fastq")[[1]][[1]]
+samples = progressr::with_progress({
+  progress = progressr::progressor(along = r1_files)
+  tracer = function(r1_file) {
+    r2_file <- str_replace(r1_file, "R1", "R2")
+    sample_name <- str_split(basename(r1_file),
+                             "_R1.fastq")[[1]][[1]]
 
   
   cmd = '/tracer/tracer'
   args = paste('assemble',
-               '--ncores', parallel::detectCores(),
+              # '--ncores', parallel::detectCores(),
                '--config_file /tercen_tracer.conf',
                '-s Hsap',
                r1_file, r2_file,
                sample_name, output_path,
                sep = ' ')
-  
-  system2(cmd, args)
-  
-}
+
+    exitCode =   system(paste(cmd, args), ignore.stdout = TRUE, ignore.stderr = TRUE)
+
+    if (exitCode != 0) {
+      stop("ERROR: tracer failed for sample: ", sample_name)
+    }
+
+     progress("TraCeR")
+
+     sample_name
+
+     }
+
+ lapply(r1_files, FUN=tracer)
+
+})
 
 
 tibble(.ci = 1,
