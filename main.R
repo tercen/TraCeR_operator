@@ -66,7 +66,9 @@ samples = progressr::with_progress({
     sample_name <- str_split(basename(r1_file),
                              "_R1.fastq")[[1]][[1]]
 
-  
+  cat(r1_file)
+  cat(r2_file)
+
   cmd = '/tracer/tracer'
   args = paste('assemble',
               # '--ncores', parallel::detectCores(),
