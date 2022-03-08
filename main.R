@@ -60,7 +60,9 @@ if (length(r1_files) == 0) stop("ERROR: No R1 FastQ files found in trimmed_fastq
 samples = progressr::with_progress({
   progress = progressr::progressor(along = r1_files)
   tracer = function(r1_file) {
-    r2_file <- str_replace(r1_file, "R1", "R2")
+    r2_file <- str_replace(r1_file, "_R1", "_R2")
+    r2_file <- str_replace(r2_file, "_val_1", "_val_2")
+
     sample_name <- str_split(basename(r1_file),
                              "_R1.fastq")[[1]][[1]]
 
