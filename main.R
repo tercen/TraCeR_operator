@@ -3,11 +3,11 @@ library(dplyr)
 library(readr)
 library(stringr)
 library(progressr)
-library("future.apply")
+#library("future.apply")
 
-# plan(multisession) # works in R studio
-no_cores <- availableCores() - 1
-plan(multicore, workers = no_cores) ## don't work on R studio
+## plan(multisession) # works in R studio
+#no_cores <- availableCores() - 1
+#plan(multicore, workers = no_cores) ## don't work on R studio
 
 handler_tercen <- function(ctx, ...) {
 
@@ -69,7 +69,7 @@ samples = progressr::with_progress({
 
   cmd = '/tracer/tracer'
   args = paste('assemble',
-               #'--ncores', parallel::detectCores(),
+               '--ncores', parallel::detectCores(),
                '--config_file /tercen_tracer.conf',
                '-s Hsap',
                r1_file, r2_file,
