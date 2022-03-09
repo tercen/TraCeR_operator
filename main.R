@@ -69,7 +69,7 @@ samples = progressr::with_progress({
 
   cmd = '/tracer/tracer'
   args = paste('assemble',
-               '--ncores', parallel::detectCores(),
+               #'--ncores', parallel::detectCores(),
                '--config_file /tercen_tracer.conf',
                '-s Hsap',
                r1_file, r2_file,
