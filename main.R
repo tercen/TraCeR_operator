@@ -88,7 +88,8 @@ samples = progressr::with_progress({
 
      }
 
- future_lapply(r1_files, FUN=tracer)
+# future_lapply(r1_files, FUN=tracer)
+ lapply(r1_files, FUN=tracer)
 
 })
 
