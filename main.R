@@ -3,11 +3,11 @@ library(dplyr)
 library(readr)
 library(stringr)
 library(progressr)
-#library("future.apply")
+library("future.apply")
 
 ## plan(multisession) # works in R studio
-#no_cores <- availableCores() - 1
-#plan(multicore, workers = no_cores) ## don't work on R studio
+no_cores <- availableCores() %/% 2
+plan(multicore, workers = no_cores) ## don't work on R studio
 
 handler_tercen <- function(ctx, ...) {
 
@@ -69,7 +69,7 @@ samples = progressr::with_progress({
 
   cmd = '/tracer/tracer'
   args = paste('assemble',
-               '--ncores', parallel::detectCores(),
+               '--ncores 2', #parallel::detectCores(),
                '--config_file /tercen_tracer.conf',
                '-s Hsap',
                r1_file, r2_file,
@@ -78,23 +78,25 @@ samples = progressr::with_progress({
 
     exitCode =   system(paste(cmd, args), ignore.stdout = TRUE, ignore.stderr = TRUE)
 
-    if (exitCode != 0) {
-      stop("ERROR: tracer failed for sample: ", sample_name)
-    }
+      if (exitCode != 0) {
+        status <- "failed"
+      } else {
+        status <- "succeeded"
+      }
 
      progress("TraCeR")
 
-     sample_name
+      return(tibble(sample = sample_name, tracer_status = status))
 
      }
 
-# future_lapply(r1_files, FUN=tracer)
- lapply(r1_files, FUN=tracer)
+  run_results <- future_lapply(r1_files, FUN=trim_galore)
+# lapply(r1_files, FUN=tracer)
 
 })
 
 
-tibble(.ci = 1,
-        n_cores_detected = parallel::detectCores()) %>%
+run_results %>%
+  mutate(.ci = 1) %>%
   ctx$addNamespace() %>%
   ctx$save()
