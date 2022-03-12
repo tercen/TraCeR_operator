@@ -90,11 +90,11 @@ samples = progressr::with_progress({
 
      }
 
-  run_results <- future_lapply(r1_files, FUN=tracer)
+  run_results <- future_lapply(r1_files, FUN=tracer) %>%
+bind_rows()
 # lapply(r1_files, FUN=tracer)
 
-}) %>%
-bind_rows()
+})
 
 
 run_results %>%
