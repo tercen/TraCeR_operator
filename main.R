@@ -36,21 +36,25 @@ ctx <- tercenCtx()
 options(progressr.enable = TRUE)
 progressr::handlers(handler_tercen(ctx))
 
+input_folder <- ctx$cselect()[[1]][[1]]
 
 # Define input and output paths
-input_path <- "/var/lib/tercen/share/write/trimmed_fastqs"
+input_path <- paste0("/var/lib/tercen/share/write/", input_folder)
+
 
 if( dir.exists(input_path) == FALSE) {
-
-  stop("ERROR: trimmed_fastqs folder does not exist in project write folder.")
-
+  stop(paste("ERROR:", input_folder, "folder does not exist in project write folder."))
 }
 
 if (length(dir(input_path)) == 0) {
-  stop("ERROR: trimmed_fastqs folder is empty.")
+  stop(paste("ERROR:", input_folder, "folder is empty."))
 }
 
-output_path <- "/var/lib/tercen/share/write/tracer_output"
+output_folder <- paste0(format(Sys.time(), "%Y_%m_%d_%H_%M_%S"),
+                        "_tracer_output")
+
+output_path <- paste0("/var/lib/tercen/share/write/",
+                      output_folder, "/")
 
 r1_files <- list.files(input_path, "_R1.*q.gz$",
                        full.names = TRUE)
@@ -98,6 +102,7 @@ bind_rows()
 
 
 run_results %>%
-  mutate(.ci = 1) %>%
+  mutate(.ci = 1,
+         tercen_output = output_folder) %>%
   ctx$addNamespace() %>%
   ctx$save()
